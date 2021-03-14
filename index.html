@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+        <title>AR</title>
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <link type="text/css" rel="stylesheet" href="./CSS/index.css">
+	</head>
+	<body style="margin: 0; overscroll-behavior: none;">
+		<video id="video" style="display:none" autoplay playsinline></video>
+        <div id="overlay">
+            <button id="GetDeviceOrientation">
+                抓取裝置的方向
+            </button>
+            <button id="GetDeviceCamera">
+                抓取相機資訊
+            </button>
+            <button id="StartButton" disabled>
+                開始運行
+            </button>
+        </div>
+
+
+        <script type="module">
+            import * as THREE from './Plugins/Three.js/build/three.module.js';
+            import Stats from './Plugins/Three.js/librarys/jsm/libs/stats.module.js';
+        
+            import { FBXLoader } from './Plugins/Three.js/librarys/jsm/loaders/FBXLoader.js';
+            import { DeviceOrientationControls } from './Plugins/Three.js/librarys/jsm/controls/DeviceOrientationControls.js';
+        
+            // 場景設定
+            let camera, controls, scene, renderer, stats;
+        
+            // 計時器
+            const clock = new THREE.Clock();
+            let mesh, video, VideoMesh;
+
+            // 拿裝置的長寬
+            let w = document.documentElement.clientWidth;
+            let h = document.documentElement.clientHeight;
+
+            var IsGetDeviceOrientationPermission                    = false;
+            var IsGetDeviceCameraPermission                         = false;
+    
+            const orientationButton                                 = document.getElementById('GetDeviceOrientation');
+            const cameraButton                                      = document.getElementById('GetDeviceCamera');
+            const startButton                                       = document.getElementById('StartButton');
+            orientationButton.addEventListener('click',             GetDeviceOrientationEvent);
+            cameraButton.addEventListener('click',                  GetDeviceCameraEvent);
+			startButton.addEventListener( 'click',                  StartButtonEvent);
+        
+            
+            // 拿取裝置事件 & 按鈕事件
+            function GetDeviceOrientationEvent()
+            {
+                camera = new THREE.PerspectiveCamera( 60, w / h, 0.1, 1000 );
+                controls = new DeviceOrientationControls(camera);
+                if ( window.DeviceOrientationEvent !== undefined && typeof window.DeviceOrientationEvent.requestPermission === 'function' ) {
+                    window.DeviceOrientationEvent.requestPermission().then(function(response){
+                        if ( response == 'granted' )
+                            __GrantedForDeviceOrientation();
+                    });
+                } else
+                    __GrantedForDeviceOrientation();
+            }
+            function GetDeviceCameraEvent()
+            {
+                // 影片設定
+                video = document.getElementById( 'video' );
+                const texture = new THREE.VideoTexture(video);
+				const material = new THREE.MeshBasicMaterial( { map: texture } );
+                const geometry = new THREE.PlaneGeometry( w / 5, h / 5 );
+                VideoMesh = new THREE.Mesh( geometry, material );
+
+                // 要權限
+                var constraints = {
+                    audio: false,
+                    video: {
+                        facingMode: {
+                            exact: 'environment'
+                        }
+                    }
+                };
+                GetVideoAuthorization(constraints).then( function ( stream ) {
+                    // 拿取 Texute
+                    video.srcObject = stream;
+                    video.play();
+
+                    // 裝置拿取成功
+                    __GrantedForDeviceCamera();
+                }).catch( function ( error ) {
+                    console.error( 'Unable to access the camera/webcam.', error );
+                    alert("抓不到裝置的相機，可能是沒有相機，或是全縣不允許!!");
+                });
+            }
+            function __GrantedForDeviceOrientation()
+            {
+                IsGetDeviceOrientationPermission = true;
+                orientationButton.disabled = true;
+                orientationButton.removeEventListener('click', GetDeviceOrientationEvent);
+
+                // 準備開始
+                __CheckIfAlreadyForStartCamera
+            }
+            function __GrantedForDeviceCamera()
+            {
+                IsGetDeviceCameraPermission = true;
+                cameraButton.disabled = true;
+                cameraButton.removeEventListener('click', GetDeviceCameraEvent);
+
+                // 準備開始
+                __CheckIfAlreadyForStartCamera();
+            }
+            function __CheckIfAlreadyForStartCamera()
+            {
+                // 如果兩個都 OK 了
+                // 就可以給使用者按按鈕
+                if (IsGetDeviceOrientationPermission && IsGetDeviceCameraPermission)
+                    startButton.disabled = false;
+            }
+            function StartButtonEvent() {
+                // 刪除 Overlay 的東西
+                const overlay = document.getElementById('overlay');
+				overlay.remove();
+
+				SetupScene();
+				Update();
+            }
+            
+            function SetupScene() 
+            {
+                const container = document.createElement( 'div' );
+                document.body.appendChild( container );
+                container.addEventListener("touchend", TouchEnd, false);
+                container.addEventListener("click", TouchEnd, false);
+        
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color( 0xa0a0a0 );                
+                scene.add(VideoMesh);
+
+                // const helperGeometry = new THREE.BoxGeometry( 100, 100, 100, 4, 4, 4 );
+				// const helperMaterial = new THREE.MeshBasicMaterial( { color: 0xff00ff, wireframe: true } );
+				// const helper = new THREE.Mesh( helperGeometry, helperMaterial );
+				// scene.add( helper );
+
+                // 打燈
+                const hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff );
+                hemiLight.position.set( 0, 200, 0 );
+                scene.add( hemiLight );
+
+                // model
+                const loader = new FBXLoader();
+                loader.load( './Assets/model_maya.fbx', function ( object ) {
+                    object.traverse( function( node ) {
+                        if( node.material )
+                        {
+                            node.material = new THREE.MeshPhongMaterial({
+                                color:  0xffffff,
+                                map: node.material.map,
+                                transparent: true,
+                            })
+                        }
+                    });
+
+                    object.scale.multiplyScalar(0.2);
+                    // scene.add( object );
+                    mesh = object;
+                } );
+        
+                renderer = new THREE.WebGLRenderer( { antialias: true } );
+                renderer.setPixelRatio( window.devicePixelRatio );
+                renderer.setSize( window.innerWidth, window.innerHeight );
+                renderer.shadowMap.enabled = true;
+                container.appendChild( renderer.domElement );
+        
+                window.addEventListener( 'resize', onWindowResize );
+        
+                // stats 顯示
+                // stats = new Stats();
+                // container.appendChild( stats.dom );
+        
+            }
+            function onWindowResize() 
+            {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+        
+                renderer.setSize( window.innerWidth, window.innerHeight );
+            }
+
+        
+            // Get Video Authorization
+            function GetVideoAuthorization(contraints) 
+            {
+                // 判斷是否有支援 Media API
+                if (!navigator.mediaDevices && !navigator.getUserMedia && !navigator.webkitGetUserMedia && !navigator.mozGetUserMedia && !navigator.msGetUserMedia) {
+                    alert("User Media API 不支援.");
+                    return;
+                }
+
+                // 取得 Media
+                return __GetUserMedia(contraints);
+            }
+            function __GetUserMedia(constraints) 
+            {
+                // 正常取得相機權限
+                if (navigator.mediaDevices)
+                    return navigator.mediaDevices.getUserMedia(constraints);
+    
+                // 舊 API
+                var legacyApi = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+                if (legacyApi) {
+                    return new Promise(function (resolve, reject) {
+                        legacyApi.bind(navigator)(constraints, resolve, reject);
+                    });
+                }
+            }
+
+
+
+            // Update
+            function Update() 
+            {
+                requestAnimationFrame( Update );
+        
+                const delta = clock.getDelta();
+                if (mesh)
+                    mesh.rotation.y += 0.1 * delta;
+
+                // Billboard
+                var LookAtVector = new THREE.Vector3(0, 0, -100);
+                LookAtVector.applyQuaternion(camera.quaternion);
+                VideoMesh.position.copy(LookAtVector);
+                VideoMesh.quaternion.copy(camera.quaternion);
+
+                controls.update();
+                renderer.render( scene, camera );
+                // stats.update();
+            }
+        
+            // TouchEnd
+            function TouchEnd()
+            {
+                event.preventDefault();
+
+                // 如果有需要用到底下的 raycaster
+                // 再打開底下的 Code
+                //mouse.x = (event.changedTouches[0].clientX / window.innerWidth) * 2 - 1;
+                //mouse.y = -(event.changedTouches[0].clientY / window.innerHeight) * 2 + 1;
+                //raycaster.setFromCamera(mouse, camera);
+                //const intersects = raycaster.intersectObjects(yourObject3D);
+                
+                if (scene.getObjectById(mesh.id))
+                    scene.remove(mesh);
+                else
+                {
+                    var LookAtVector = new THREE.Vector3(0, 0, -10);
+                    LookAtVector.applyQuaternion(camera.quaternion);
+                    mesh.position.copy(LookAtVector);
+                    scene.add(mesh);
+                }
+            }
+        </script>
+	</body>
+</html>
