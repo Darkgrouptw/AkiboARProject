@@ -90,7 +90,7 @@
                     __GrantedForDeviceCamera();
                 }).catch( function ( error ) {
                     console.error( 'Unable to access the camera/webcam.', error );
-                    alert("抓不到裝置的相機，可能是沒有相機，或是全縣不允許!!");
+                    alert("抓不到裝置的相機，可能是沒有相機，或是權限不允許!!");
                 });
             }
             function __GrantedForDeviceOrientation()
@@ -158,11 +158,12 @@
                                 color:  0xffffff,
                                 map: node.material.map,
                                 transparent: true,
-                            })
+                                side: THREE.DoubleSide,
+                            });
                         }
                     });
 
-                    object.scale.multiplyScalar(0.2);
+                    object.scale.multiplyScalar(0.5);
                     // scene.add( object );
                     mesh = object;
                 } );
@@ -254,7 +255,7 @@
                     scene.remove(mesh);
                 else
                 {
-                    var LookAtVector = new THREE.Vector3(0, 0, -10);
+                    var LookAtVector = new THREE.Vector3(0, 5, -10);
                     LookAtVector.applyQuaternion(camera.quaternion);
                     mesh.position.copy(LookAtVector);
                     scene.add(mesh);
