@@ -10,11 +10,10 @@
 	align-items: center;
 	justify-content: center;
 	flex-direction: column;
-	background: rgba(0,0,0,0.7);
+	background: rgba(0,0,0,1); 
 }
 
 #overlay button {
-	background: transparent;
 	border: 0;
 	border: 1px solid rgb(255, 255, 255);
 	border-radius: 4px;
@@ -22,6 +21,7 @@
 	padding: 12px 18px;
 	margin-top: 20px;
 	width: 12em;
+	height: 3em;
 	text-transform: uppercase;
 	cursor: pointer;
 }
@@ -35,4 +35,23 @@
 	background-color: #f00;
 	margin-top: 20px;
 	padding: 10px;
+}
+
+.Logo {
+	width: 12em;
+	height: 7em;
+}
+.ButtonIcon1 {
+	background: url(../Assets/Images/ButtonIcon1.png);
+	background-size: 12em 3em;
+}
+.ButtonIcon2 {
+	background: url(../Assets/Images/ButtonIcon2.png);
+	background-size: 12em 3em;
+}
+.DivText {
+	font-size: 2em;
+    color: #FFFFFF;
+    text-align: center;
+    padding-top: 1em;
 }

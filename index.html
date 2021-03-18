@@ -9,15 +9,15 @@
 	<body style="margin: 0; overscroll-behavior: none;">
 		<video id="video" style="display:none" autoplay playsinline></video>
         <div id="overlay">
-            <button id="GetDeviceOrientation">
-                抓取裝置的方向
+            <img src="./Assets/Images/Logo.png" class="Logo">
+            <button id="GetDeviceCamera" class="ButtonIcon1">
             </button>
-            <button id="GetDeviceCamera">
-                抓取相機資訊
+            <button id="GetDeviceOrientation" class="ButtonIcon2">
             </button>
-            <button id="StartButton" disabled>
-                開始運行
-            </button>
+            <div class="DivText">
+                進入場景後<br>
+                請典籍螢幕開始瀏覽
+            </div>
         </div>
 
 
@@ -42,27 +42,13 @@
             var IsGetDeviceOrientationPermission                    = false;
             var IsGetDeviceCameraPermission                         = false;
     
-            const orientationButton                                 = document.getElementById('GetDeviceOrientation');
             const cameraButton                                      = document.getElementById('GetDeviceCamera');
-            const startButton                                       = document.getElementById('StartButton');
-            orientationButton.addEventListener('click',             GetDeviceOrientationEvent);
+            const orientationButton                                 = document.getElementById('GetDeviceOrientation');
             cameraButton.addEventListener('click',                  GetDeviceCameraEvent);
-			startButton.addEventListener( 'click',                  StartButtonEvent);
+            orientationButton.addEventListener('click',             GetDeviceOrientationEvent);
+            LoadModel();
         
-            
             // 拿取裝置事件 & 按鈕事件
-            function GetDeviceOrientationEvent()
-            {
-                camera = new THREE.PerspectiveCamera( 60, w / h, 0.1, 1000 );
-                controls = new DeviceOrientationControls(camera);
-                if ( window.DeviceOrientationEvent !== undefined && typeof window.DeviceOrientationEvent.requestPermission === 'function' ) {
-                    window.DeviceOrientationEvent.requestPermission().then(function(response){
-                        if ( response == 'granted' )
-                            __GrantedForDeviceOrientation();
-                    });
-                } else
-                    __GrantedForDeviceOrientation();
-            }
             function GetDeviceCameraEvent()
             {
                 // 影片設定
@@ -93,14 +79,17 @@
                     alert("抓不到裝置的相機，可能是沒有相機，或是權限不允許!!");
                 });
             }
-            function __GrantedForDeviceOrientation()
+            function GetDeviceOrientationEvent()
             {
-                IsGetDeviceOrientationPermission = true;
-                orientationButton.disabled = true;
-                orientationButton.removeEventListener('click', GetDeviceOrientationEvent);
-
-                // 準備開始
-                __CheckIfAlreadyForStartCamera
+                camera = new THREE.PerspectiveCamera( 60, w / h, 0.1, 1000 );
+                controls = new DeviceOrientationControls(camera);
+                if ( window.DeviceOrientationEvent !== undefined && typeof window.DeviceOrientationEvent.requestPermission === 'function' ) {
+                    window.DeviceOrientationEvent.requestPermission().then(function(response){
+                        if ( response == 'granted' )
+                            __GrantedForDeviceOrientation();
+                    });
+                } else
+                    __GrantedForDeviceOrientation();
             }
             function __GrantedForDeviceCamera()
             {
@@ -111,14 +100,23 @@
                 // 準備開始
                 __CheckIfAlreadyForStartCamera();
             }
+            function __GrantedForDeviceOrientation()
+            {
+                IsGetDeviceOrientationPermission = true;
+                orientationButton.disabled = true;
+                orientationButton.removeEventListener('click', GetDeviceOrientationEvent);
+
+                // 準備開始
+                __CheckIfAlreadyForStartCamera();
+            }
             function __CheckIfAlreadyForStartCamera()
             {
                 // 如果兩個都 OK 了
                 // 就可以給使用者按按鈕
                 if (IsGetDeviceOrientationPermission && IsGetDeviceCameraPermission)
-                    startButton.disabled = false;
+                    __StartButtonEvent();
             }
-            function StartButtonEvent() {
+            function __StartButtonEvent() {
                 // 刪除 Overlay 的東西
                 const overlay = document.getElementById('overlay');
 				overlay.remove();
@@ -137,7 +135,7 @@
                 scene = new THREE.Scene();
                 scene.background = new THREE.Color( 0xa0a0a0 );                
                 scene.add(VideoMesh);
-
+                
                 // const helperGeometry = new THREE.BoxGeometry( 100, 100, 100, 4, 4, 4 );
 				// const helperMaterial = new THREE.MeshBasicMaterial( { color: 0xff00ff, wireframe: true } );
 				// const helper = new THREE.Mesh( helperGeometry, helperMaterial );
@@ -147,26 +145,6 @@
                 const hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff );
                 hemiLight.position.set( 0, 200, 0 );
                 scene.add( hemiLight );
-
-                // model
-                const loader = new FBXLoader();
-                loader.load( './Assets/model_maya.fbx', function ( object ) {
-                    object.traverse( function( node ) {
-                        if( node.material )
-                        {
-                            node.material = new THREE.MeshPhongMaterial({
-                                color:  0xffffff,
-                                map: node.material.map,
-                                transparent: true,
-                                side: THREE.DoubleSide,
-                            });
-                        }
-                    });
-
-                    object.scale.multiplyScalar(0.5);
-                    // scene.add( object );
-                    mesh = object;
-                } );
         
                 renderer = new THREE.WebGLRenderer( { antialias: true } );
                 renderer.setPixelRatio( window.devicePixelRatio );
@@ -188,8 +166,29 @@
         
                 renderer.setSize( window.innerWidth, window.innerHeight );
             }
+            function LoadModel()
+            {
+                // model
+                const loader = new FBXLoader();
+                loader.load( './Assets/model_maya.fbx', function ( object ) {
+                    object.traverse( function( node ) {
+                        if( node.material )
+                        {
+                            node.material = new THREE.MeshPhongMaterial({
+                                color:  0xffffff,
+                                map: node.material.map,
+                                transparent: true,
+                                side: THREE.DoubleSide,
+                            });
+                        }
+                    });
 
-        
+                    object.scale.multiplyScalar(0.5);
+                    // scene.add( object );
+                    mesh = object;
+                } );
+            }
+
             // Get Video Authorization
             function GetVideoAuthorization(contraints) 
             {
@@ -216,8 +215,6 @@
                     });
                 }
             }
-
-
 
             // Update
             function Update() 
@@ -255,7 +252,7 @@
                     scene.remove(mesh);
                 else
                 {
-                    var LookAtVector = new THREE.Vector3(0, 5, -10);
+                    var LookAtVector = new THREE.Vector3(0, 1, 0);
                     LookAtVector.applyQuaternion(camera.quaternion);
                     mesh.position.copy(LookAtVector);
                     scene.add(mesh);
