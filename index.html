@@ -14,10 +14,6 @@
             </button>
             <button id="GetDeviceOrientation" class="ButtonIcon2">
             </button>
-            <div class="DivText">
-                進入場景後<br>
-                請典籍螢幕開始瀏覽
-            </div>
         </div>
 
 
@@ -129,8 +125,6 @@
             {
                 const container = document.createElement( 'div' );
                 document.body.appendChild( container );
-                container.addEventListener("touchend", TouchEnd, false);
-                container.addEventListener("click", TouchEnd, false);
         
                 scene = new THREE.Scene();
                 scene.background = new THREE.Color( 0xa0a0a0 );                
@@ -153,6 +147,12 @@
                 container.appendChild( renderer.domElement );
         
                 window.addEventListener( 'resize', onWindowResize );
+
+                // 預設一開始就顯示
+                var LookAtVector = new THREE.Vector3(0, 1, 0);
+                LookAtVector.applyQuaternion(camera.quaternion);
+                mesh.position.copy(LookAtVector);
+                scene.add(mesh);
         
                 // stats 顯示
                 // stats = new Stats();
@@ -234,29 +234,6 @@
                 controls.update();
                 renderer.render( scene, camera );
                 // stats.update();
-            }
-        
-            // TouchEnd
-            function TouchEnd()
-            {
-                event.preventDefault();
-
-                // 如果有需要用到底下的 raycaster
-                // 再打開底下的 Code
-                //mouse.x = (event.changedTouches[0].clientX / window.innerWidth) * 2 - 1;
-                //mouse.y = -(event.changedTouches[0].clientY / window.innerHeight) * 2 + 1;
-                //raycaster.setFromCamera(mouse, camera);
-                //const intersects = raycaster.intersectObjects(yourObject3D);
-                
-                if (scene.getObjectById(mesh.id))
-                    scene.remove(mesh);
-                else
-                {
-                    var LookAtVector = new THREE.Vector3(0, 1, 0);
-                    LookAtVector.applyQuaternion(camera.quaternion);
-                    mesh.position.copy(LookAtVector);
-                    scene.add(mesh);
-                }
             }
         </script>
 	</body>

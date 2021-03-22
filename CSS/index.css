@@ -15,19 +15,12 @@
 
 #overlay button {
 	border: 0;
-	border: 1px solid rgb(255, 255, 255);
 	border-radius: 4px;
 	color: #ffffff;
-	padding: 12px 18px;
-	margin-top: 20px;
-	width: 12em;
-	height: 3em;
-	text-transform: uppercase;
+	margin-top: 30px;
+	width: 15em;
+	height: 4em;
 	cursor: pointer;
-}
-#overlay button:disabled {
-	border: 1px solid rgb(128, 128, 128);
-	color: #888888;
 }
 #notSupported {
 	width: 50%;
@@ -39,19 +32,13 @@
 
 .Logo {
 	width: 12em;
-	height: 7em;
+	height: 5em;
 }
 .ButtonIcon1 {
 	background: url(../Assets/Images/ButtonIcon1.png);
-	background-size: 12em 3em;
+	background-size: 15em 4em;
 }
 .ButtonIcon2 {
 	background: url(../Assets/Images/ButtonIcon2.png);
-	background-size: 12em 3em;
-}
-.DivText {
-	font-size: 2em;
-    color: #FFFFFF;
-    text-align: center;
-    padding-top: 1em;
+	background-size: 15em 4em;
 }
